@@ -1,0 +1,4 @@
+# Never upload the local TLS key, and let the platform install dependencies.
+certs/
+node_modules/
+.env
