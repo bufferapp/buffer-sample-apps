@@ -12,7 +12,6 @@ It's a small starter app called Draft Queue which covers key components of an ap
 
 Use it as a starting point for your own integration. Clone it, configure it with your own app client, build new features on top, or share it with your AI coding agent as a reference.
 
-📘 **Tutorial:** [Creating Buffer Client Apps](https://example.com/TODO-tutorial-url) walks through this example step by step, from registering an app client to deploying it.
 
 ## Prerequisites
 
@@ -48,7 +47,7 @@ Use it as a starting point for your own integration. Clone it, configure it with
    | `BUFFER_CLIENT_ID` | Your app client ID from Buffer. |
    | `BUFFER_CLIENT_SECRET` | Required for a confidential client. Never expose it to the browser or commit it. |
    | `SESSION_SECRET` | At least 32 characters. Generate one with `openssl rand -hex 32`. Optional locally, required in production. |
-   | `REDIRECT_URI` | Optional locally. If set, it must exactly match the redirect URI registered for your app client. |
+   | `REDIRECT_URI` | Optional locally and on your Vercel production deployment. If set, it must exactly match the redirect URI registered for your app client. Vercel preview deployments have no default callback, so login is disabled on them unless you register the preview's `/callback` URL and set `REDIRECT_URI` for that environment. |
 
 4. Generate a self-signed certificate for local HTTPS:
 

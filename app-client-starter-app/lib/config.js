@@ -27,11 +27,17 @@ if (!CLIENT_ID) {
 export const CLIENT_SECRET = process.env.BUFFER_CLIENT_SECRET?.trim() || null
 
 // OAuth redirect URIs must match what is registered with Buffer exactly.
-// On Vercel, default to the stable production domain — preview URLs change
-// every deploy and would never match a registered URI.
-function defaultRedirectUri() {
-  const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  if (productionUrl) return `https://${productionUrl}/callback`
+// On Vercel, only the production deployment defaults to the stable production
+// domain. Vercel sets VERCEL_PROJECT_PRODUCTION_URL on previews too, but a
+// preview can't use that callback: the production host can't read the
+// preview's session cookie, so the PKCE verifier would be lost. Previews get no
+// default, and login stays off there unless REDIRECT_URI is set for them.
+export function defaultRedirectUri(env = process.env) {
+  if (env.VERCEL_ENV) {
+    return env.VERCEL_ENV === 'production' && env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/callback`
+      : null
+  }
   return `https://localhost:${PORT}/callback`
 }
 
@@ -52,9 +58,26 @@ function sanitizeRedirectUri(value) {
   }
 }
 
+// null means this deployment has no registered callback, so login is disabled.
 export const REDIRECT_URI = process.env.REDIRECT_URI
   ? sanitizeRedirectUri(process.env.REDIRECT_URI)
   : defaultRedirectUri()
+
+// The session cookie holding the PKCE verifier belongs to the host that started
+// the login, so the callback has to land on that same host. Returns why login
+// can't start from `host`, or null when it can.
+export function loginUnavailableReason(host, redirectUri = REDIRECT_URI) {
+  if (!redirectUri) {
+    return 'Login is disabled on this deployment: it has no registered callback. ' +
+      'Register this deployment\'s /callback URL with your app client and set REDIRECT_URI to it, or use the production deployment.'
+  }
+  const callbackHost = new URL(redirectUri).host
+  if (host !== callbackHost) {
+    return `Login is only available at https://${callbackHost}, the host of the registered callback (${redirectUri}). ` +
+      'Starting it from another host would lose the session that carries the login.'
+  }
+  return null
+}
 
 // The OAuth flow spans two requests, so a key that changed on each boot would
 // break any login that straddled a restart. Persist the development one.

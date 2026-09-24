@@ -6,6 +6,7 @@ process.env.BUFFER_CLIENT_ID = 'test-client'
 process.env.SESSION_SECRET = 'a'.repeat(32)
 process.env.REDIRECT_URI = 'https://example.test/callback'
 
+const { defaultRedirectUri, loginUnavailableReason } = await import('../lib/config.js')
 const { buildAuthorizeUrl, buildPostInput, createPkcePair, exchangeCodeForTokens, refreshTokens, requestTokens } = await import('../lib/buffer.js')
 
 test('PKCE pairs use an S256 base64url challenge', () => {
@@ -107,4 +108,24 @@ test('error detail reaches a developer but never a production user', async () =>
     encoding: 'utf8',
   })
   assert.equal(output.trim(), 'Generic.')
+})
+
+test('only the Vercel production deployment defaults to the production callback', () => {
+  const productionUrl = 'app.example.test'
+  assert.equal(
+    defaultRedirectUri({ VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: productionUrl }),
+    'https://app.example.test/callback',
+  )
+  // Vercel sets the production URL on previews too; it must not be used there.
+  assert.equal(defaultRedirectUri({ VERCEL_ENV: 'preview', VERCEL_PROJECT_PRODUCTION_URL: productionUrl }), null)
+  assert.equal(defaultRedirectUri({ VERCEL_ENV: 'development', VERCEL_PROJECT_PRODUCTION_URL: productionUrl }), null)
+  assert.equal(defaultRedirectUri({}), 'https://localhost:3000/callback')
+})
+
+test('login starts only on the host of the registered callback', () => {
+  assert.equal(loginUnavailableReason('example.test', 'https://example.test/callback'), null)
+  assert.equal(loginUnavailableReason('localhost:3000', 'https://localhost:3000/callback'), null)
+  assert.match(loginUnavailableReason('app-git-branch.vercel.app', 'https://example.test/callback'), /only available at https:\/\/example\.test/)
+  assert.match(loginUnavailableReason('127.0.0.1:3000', 'https://localhost:3000/callback'), /only available/)
+  assert.match(loginUnavailableReason('app-git-branch.vercel.app', null), /disabled on this deployment/)
 })

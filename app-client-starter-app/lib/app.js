@@ -1,6 +1,6 @@
 import express from 'express'
 import path from 'node:path'
-import { HttpError, REDIRECT_URI, withCause } from './config.js'
+import { HttpError, REDIRECT_URI, loginUnavailableReason, withCause } from './config.js'
 import { readSession } from './session.js'
 import {
   ACCOUNT_QUERY,
@@ -46,7 +46,10 @@ const wrap = (handler) => async (req, res, next) => {
   }
 }
 
-app.get('/auth/login', async (req, res) => {
+app.get('/auth/login', wrap(async (req, res) => {
+  const unavailable = loginUnavailableReason(req.get('host'))
+  if (unavailable) return res.redirect(`/?error=${encodeURIComponent(unavailable)}`)
+
   const { verifier, challenge } = createPkcePair()
   const state = createState()
 
@@ -56,9 +59,9 @@ app.get('/auth/login', async (req, res) => {
   await req.session.save()
 
   res.redirect(buildAuthorizeUrl({ state, codeChallenge: challenge }))
-})
+}))
 
-app.get('/callback', async (req, res) => {
+app.get('/callback', wrap(async (req, res) => {
   const { code, state, error, error_description: description } = req.query
   const pkce = req.session.pkce
   req.session.pkce = null   // one-time values — discard either way
@@ -84,23 +87,34 @@ app.get('/callback', async (req, res) => {
     return res.status(403).send('Invalid state parameter: this callback did not come from a login this app started.')
   }
 
+  let tokens
   try {
     // The code is short-lived, so exchange it immediately.
-    req.session.tokens = await exchangeCodeForTokens({ code, codeVerifier: pkce.codeVerifier })
-    await req.session.save()
-    res.redirect('/')
+    tokens = await exchangeCodeForTokens({ code, codeVerifier: pkce.codeVerifier })
   } catch (err) {
     console.error(JSON.stringify({ event: 'oauth_token_exchange_failed', code: err.oauthError, message: err.message }))
     await req.session.save()
     const message = withCause('Buffer could not complete the connection. Check your client configuration.', err.message)
-    res.redirect(`/?error=${encodeURIComponent(message)}`)
+    return res.redirect(`/?error=${encodeURIComponent(message)}`)
   }
-})
 
-app.post('/auth/logout', async (req, res) => {
+  try {
+    req.session.tokens = tokens
+    await req.session.save()
+  } catch (err) {
+    // Saving can fail because of the tokens themselves (a sealed cookie that is
+    // too large, say), so drop them before saving the cleared session.
+    req.session.tokens = null
+    await req.session.save()
+    throw err
+  }
+  res.redirect('/')
+}))
+
+app.post('/auth/logout', wrap(async (req, res) => {
   await req.session.destroy()
   res.json({ connected: false })
-})
+}))
 
 app.get('/api/session', wrap(async (req, res) => {
   // redirectUri is echoed back for debugging: curl this endpoint to see the
@@ -167,7 +181,9 @@ app.post('/api/posts', wrap(async (req, res) => {
 
 // Misconfiguration (a missing SESSION_SECRET, for instance) should read as a
 // clear message instead of an opaque platform 500.
-app.use((err, _req, res, _next) => {
+app.use((err, _req, res, next) => {
+  // Too late for a clean response; let Express close the connection.
+  if (res.headersSent) return next(err)
   console.error(JSON.stringify({ event: 'unhandled_request_error', name: err.name, message: err.message }))
   res.status(500).json({ error: withCause('Something went wrong. Please try again.', err.message) })
 })
