@@ -20,6 +20,7 @@ const platformTerminatesTls = IS_PRODUCTION
 
 function describe(scheme) {
   console.log(`\n  Listening on ${scheme}://0.0.0.0:${PORT}`)
+  if (!platformTerminatesTls) console.log(`  Open:         ${scheme}://localhost:${PORT}`)
   console.log(`  Redirect URI: ${REDIRECT_URI}`)
   console.log(`  Client:       ${CLIENT_ID} (${CLIENT_SECRET ? 'confidential' : 'public / PKCE only'})`)
   if (scheme === 'https') console.log('\n  The certificate is self-signed — accept the browser warning once.')

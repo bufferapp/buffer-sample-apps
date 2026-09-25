@@ -47,7 +47,7 @@ Use it as a starting point for your own integration. Clone it, configure it with
    | `BUFFER_CLIENT_ID` | Your app client ID from Buffer. |
    | `BUFFER_CLIENT_SECRET` | Required for a confidential client. Never expose it to the browser or commit it. |
    | `SESSION_SECRET` | At least 32 characters. Generate one with `openssl rand -hex 32`. Optional locally, required in production. |
-   | `REDIRECT_URI` | Optional locally and on your Vercel production deployment. If set, it must exactly match the redirect URI registered for your app client. Vercel preview deployments have no default callback, so login is disabled on them unless you register the preview's `/callback` URL and set `REDIRECT_URI` for that environment. |
+   | `REDIRECT_URI` | It must exactly match the redirect URI registered for your app client. |
 
 4. Generate a self-signed certificate for local HTTPS:
 
@@ -57,20 +57,13 @@ Use it as a starting point for your own integration. Clone it, configure it with
 
    Buffer doesn't accept `http://localhost` redirect URIs, so the dev server runs over HTTPS. If you skip this step, `npm start` generates the certificate on first run.
 
-## Run it locally
+5. Run the app locally:
 
 ```bash
 npm start
 ```
 
 Open `https://localhost:3000` and accept the self-signed development certificate in your browser.
-
-To run the tests and syntax checks:
-
-```bash
-npm test
-npm run lint
-```
 
 ## Project structure
 
