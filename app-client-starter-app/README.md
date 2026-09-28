@@ -10,6 +10,8 @@ It's a small starter app called Draft Queue which covers key components of an ap
 2. The app lists the channels in their Buffer organization.
 3. The user picks a channel, and the app creates a **draft** post in that channel's queue.
 
+   ![Draft Queue demo: connecting a Buffer account, picking a channel, and adding a draft post to its queue](docs/draft-queue-demo.gif)
+
 Use it as a starting point for your own integration. Clone it, configure it with your own app client, build new features on top, or share it with your AI coding agent as a reference.
 
 
