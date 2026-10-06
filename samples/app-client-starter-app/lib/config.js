@@ -129,7 +129,7 @@ export const API_URL = 'https://api.buffer.com'
 // Ask for exactly what the app uses: every extra permission on the consent
 // screen is another reason not to click Approve. `offline_access` lets this
 // starter renew an expired access token without placing either token in page
-// JavaScript. See docs/production-oauth.md before using this pattern at scale.
+// JavaScript.
 export const SCOPES = 'account:read posts:write offline_access'
 
 // Someone building against the API needs Buffer's own words to debug; someone

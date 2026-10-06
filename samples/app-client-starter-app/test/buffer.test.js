@@ -36,15 +36,15 @@ test('post input is always draft-only and adds service metadata', () => {
   assert.deepEqual(input.assets, [{ image: { url: 'https://cdn.example.test/photo.jpg' } }])
 })
 
-test('token exchange keeps the refresh token in the sealed HttpOnly cookie session', async () => {
+test('token responses map to an access token and a refresh token', async () => {
   const originalFetch = globalThis.fetch
   globalThis.fetch = async () => new Response(JSON.stringify({
-    access_token: 'access-token', refresh_token: 'do-not-store-me', expires_in: 3600, scope: 'account:read',
+    access_token: 'access-token', refresh_token: 'refresh-token', expires_in: 3600, scope: 'account:read',
   }), { status: 200, headers: { 'Content-Type': 'application/json' } })
   try {
     const tokens = await requestTokens({ grant_type: 'authorization_code', code: 'code' })
     assert.equal(tokens.accessToken, 'access-token')
-    assert.equal(tokens.refreshToken, 'do-not-store-me')
+    assert.equal(tokens.refreshToken, 'refresh-token')
   } finally {
     globalThis.fetch = originalFetch
   }
