@@ -49,8 +49,9 @@ Use it as a starting point for your own integration. Clone it, configure it with
    | `BUFFER_CLIENT_SECRET` | Required for a confidential client. Never expose it to the browser or commit it. |
    | `SESSION_SECRET` | At least 32 characters. Generate one with `openssl rand -hex 32`. Optional locally, required in production. |
    | `REDIRECT_URI` | It must exactly match the redirect URI registered for your app client. |
+   | `PORT` | Port your app is running on locally. Should match the port specified in the `REDIRECT_URI`.
 
-4. Generate a self-signed certificate for local HTTPS:
+5. Generate a self-signed certificate for local HTTPS:
 
    ```bash
    npm run certs
@@ -58,7 +59,7 @@ Use it as a starting point for your own integration. Clone it, configure it with
 
    Buffer doesn't accept `http://localhost` redirect URIs, so the dev server runs over HTTPS. If you skip this step, `npm start` generates the certificate on first run.
 
-5. Run the app locally:
+6. Run the app locally:
 
    ```bash
    npm start
