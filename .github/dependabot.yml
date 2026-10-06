@@ -2,7 +2,7 @@ version: 2
 updates:
   # Each sample app needs its own entry, pointing at the folder that holds its package.json.
   - package-ecosystem: npm
-    directory: /app-client-starter-app
+    directory: /samples/app-client-starter-app
     schedule:
       interval: weekly
     groups:

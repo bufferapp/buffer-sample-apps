@@ -23,8 +23,7 @@ const options = {
 //
 // This is deliberately the simplest viable pattern. It prevents page
 // JavaScript from reading tokens, but cannot coordinate refreshes from two
-// concurrent requests. For a production shared-store design, see
-// docs/production-oauth.md.
+// concurrent requests.
 export function readSession(req, res) {
   return getIronSession(req, res, options)
 }
